@@ -8,20 +8,39 @@ const server = http.createServer(app);
 const io = new Server(server);
 app.use(require("cors")());
 
-// Vehicles data
+// Lagos geographical boundaries
+const LAGOS_LAT_MIN = 6.4;
+const LAGOS_LAT_MAX = 6.7;
+const LAGOS_LNG_MIN = 3.1;
+const LAGOS_LNG_MAX = 3.5;
+
+// Vehicles data initialized within Lagos bounds
 let vehicles = [
-  { id: "bus1", type: "bus", lat: 40.73061, lng: -73.935242 },
-  { id: "bus2", type: "bus", lat: 40.73161, lng: -73.934242 },
-  { id: "train1", type: "train", lat: 40.75061, lng: -73.945242 },
-  { id: "train2", type: "train", lat: 40.75161, lng: -73.944242 },
+  { id: "bus1", type: "bus", lat: 6.5244, lng: 3.3792 }, // Lagos central
+  { id: "bus2", type: "bus", lat: 6.5294, lng: 3.3892 },
+  { id: "train1", type: "train", lat: 6.5144, lng: 3.3512 },
+  { id: "train2", type: "train", lat: 6.5344, lng: 3.4192 },
 ];
 
-// Simulate vehicle movement
+// Helper function to constrain latitude and longitude within Lagos bounds
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+// Simulate vehicle movement within Lagos
 function updateVehicleLocations() {
   vehicles = vehicles.map((v) => ({
     ...v,
-    lat: v.lat + (Math.random() - 0.5) * 0.001,
-    lng: v.lng + (Math.random() - 0.5) * 0.001,
+    lat: clamp(
+      v.lat + (Math.random() - 0.5) * 0.01,
+      LAGOS_LAT_MIN,
+      LAGOS_LAT_MAX
+    ),
+    lng: clamp(
+      v.lng + (Math.random() - 0.5) * 0.01,
+      LAGOS_LNG_MIN,
+      LAGOS_LNG_MAX
+    ),
   }));
 }
 
@@ -50,6 +69,7 @@ io.on("connection", (socket) => {
   const vehicleInterval = setInterval(() => {
     updateVehicleLocations();
     socket.emit("vehicleUpdate", vehicles);
+    console.log("Vehicle updates sent:", vehicles);
   }, 5000);
 
   // Periodically send notifications
